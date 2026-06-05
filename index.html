@@ -95,6 +95,24 @@ font-weight:bold;
         class="login-input"
         placeholder="Password"
     >
+<div style="
+    margin-top:8px;
+    margin-bottom:12px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:13px;
+    color:#cbd5e1;
+">
+    <input
+        type="checkbox"
+        id="showPassword"
+        onchange="togglePassword()"
+    >
+    <label for="showPassword">
+        แสดงรหัสผ่าน
+    </label>
+</div>
 
    <button
     class="login-btn"
@@ -739,6 +757,15 @@ const total = dnaStats.win + dnaStats.loss
 // วางตรงนี้
 document.getElementById('loginScreen').style.display='flex'
 
+function togglePassword() {
+    const passInput =
+        document.getElementById('passInput');
+
+    passInput.type =
+        passInput.type === 'password'
+        ? 'text'
+        : 'password';
+}
 </script>
 </body>
 </html>
