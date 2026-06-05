@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ai Smart</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+body{background:#0f172a;color:#f8fafc;font-family:sans-serif}
+.panel{background:#1e293b;border:1px solid #334155;border-radius:12px;margin-bottom:12px;padding:12px}
+table{border-collapse:collapse;width:100%}
+td{border:1px solid #334155;width:26px;height:26px;text-align:center}
+.dot{
+  width:18px;height:18px;border-radius:50%;
+  margin:auto;color:white;font-size:11px;
+  display:flex;align-items:center;justify-content:center
+}
+.p{background:#2563eb}
+.b{background:#dc2626}
+.t{background:#16a34a}
+
+@keyframes radar{
+  0%,100%{opacity:1;box-shadow:0 0 16px currentColor}
+  50%{opacity:.35}
+}
+.radar{animation:radar .6s infinite;font-weight:900}
+.login-screen{
+position:fixed;
+inset:0;
+background:#020617;
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:99999;
+}
+
+.login-box{
+width:340px;
+background:#1e293b;
+border:1px solid #334155;
+border-radius:16px;
+padding:20px;
+}
+
+.login-input{
+width:100%;
+padding:10px;
+margin-top:8px;
+margin-bottom:10px;
+background:#0f172a;
+border:1px solid #334155;
+border-radius:8px;
+color:white;
+}
+
+.login-btn{
+width:100%;
+padding:12px;
+background:#2563eb;
+border:none;
+border-radius:10px;
+font-weight:bold;
+color:white;
+cursor:pointer;
+}
+
+.exp-box{
+margin-top:10px;
+padding:10px;
+border:1px solid #ef4444;
+border-radius:10px;
+text-align:center;
+color:#fca5a5;
+font-weight:bold;
+}
+</style>
+</head>
+<body class="p-4 pb-56">
+
+<div id="loginScreen" class="login-screen">
+
+<div class="login-box">
+
+<h2 style="text-align:center;font-size:22px;font-weight:bold">
+LOGIN
+</h2>
+
+<input
+id="userInput"
+class="login-input"
+placeholder="Username"
+>
+
+<input
+id="passInput"
+type="password"
+class="login-input"
+placeholder="Password"
+>
+
+<label style="font-size:13px">
+<input
+type="checkbox"
+onclick="togglePassword()"
+>
+แสดงรหัสผ่าน
+</label>
+
+<button
+class="login-btn"
+onclick="login()"
+>
+เข้าสู่ระบบ
+</button>
+
+<div id="loginMsg"
+style="
+margin-top:10px;
+text-align:center;
+color:#f87171;
+">
+</div>
+
+</div>
+
+</div>
+<div class="max-w-5xl mx-auto">
+
+<h1 class="text-xl font-bold text-blue-400 mb-3">Ai Smart</h1>
+<div class="panel border-red-500 text-center">
+
+<div class="text-red-100 font-bold" style="font-size:8px;">
+Exp.
+</div>
+
+<div
+id="expireDate"
+style="
+font-size:11px;
+font-weight:bold;
+color:#fde047;
+"
+>
+17 มิถุนายน 2569
+</div>
+
+</div>
+
+<!-- AI NEXT -->
+<div class="panel border-blue-500 text-center">
+  <div class="text-xs text-slate-400">AI NEXT RECOMMENDATION</div>
+  <div id="aiResult" class="text-4xl font-black text-blue-400">--</div>
+</div>
+
+<!-- DNA -->
+<div class="panel border-purple-500 text-center">
+  <div class="text-xs text-purple-400 mb-1">DNA STATISTICS (AI WIN RATE)</div>
+  <div id="dnaStat" class="text-lg font-bold">0% (0W / 0L)</div>
+</div>
+
+<!-- DEEP INSIGHT -->
+<div class="panel border-emerald-500">
+  <div class="text-sm font-bold text-emerald-400 mb-2">
+    DEEP INSIGHT (13 LINES)
+  </div>
+  <div id="deepPanel"
+
+class="grid lg:grid-cols-4 md:grid-cols-3 grid-cols-2 gap-2 text-xs text-center font-bold items-start"></div>
+</div>
+
+<!-- ROADS -->
+<div class="panel">
+  <div class="text-xs mb-1">BEAD</div>
+  <table id="bead"></table>
+</div>
+
+<div class="panel">
+  <div class="text-xs mb-1">BIG ROAD</div>
+  <table id="big"></table>
+</div>
+
+</div>
+
+<!-- CONTROLS -->
+<div class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 p-4 space-y-2">
+  <div class="max-w-xl mx-auto flex gap-2">
+    <button onclick="add('PLAYER')" class="flex-1 bg-blue-600 rounded-xl p-3 font-bold">PLAYER</button>
+    <button onclick="add('TIE')" class="bg-green-600 rounded-xl p-3 w-16">T</button>
+    <button onclick="add('BANKER')" class="flex-1 bg-red-600 rounded-xl p-3 font-bold">BANKER</button>
+  </div>
+  <div class="max-w-xl mx-auto flex gap-2">
+    <button onclick="undo()" class="flex-1 bg-slate-600 rounded-xl p-3 font-bold">UNDO</button>
+    <button onclick="clearAll()" class="flex-1 bg-slate-800 rounded-xl p-3 font-bold">CLEAR</button>
+  </div>
+</div>
+
+<script>
+const ROWS=6
+let history=[]
+let aiHistory=[]
+let dnaStats={win:0,loss:0}
+
+const INSIGHT_COUNT = 13
+
+let insightStats = Array.from(
+  {length:INSIGHT_COUNT},
+  ()=>({history:[]})
+)
+// เก็บผลทำนายล่าสุดของทั้ง 13 สาย
+let currentInsights = []
+/* TABLE INIT */
+function make(id,r,c){
+  const t=document.getElementById(id)
+  for(let i=0;i<r;i++){
+    const tr=document.createElement('tr')
+    for(let j=0;j<c;j++) tr.appendChild(document.createElement('td'))
+    t.appendChild(tr)
+  }
+}
+make('bead',ROWS,25)
+make('big',ROWS,60)
+
+/* ADD */
+function add(x){
+
+  if(aiHistory.length && x!=='TIE'){
+    const lastAi=aiHistory.at(-1)
+    lastAi===x ? dnaStats.win++ : dnaStats.loss++
+  }
+
+  // ===== วางตรงนี้ =====
+const prevPredictions = predictors.map(fn => fn())
+
+history.push(x)
+
+currentInsights = prevPredictions
+
+const ai = calcAiNext()
+
+if(ai!=='--'){
+    aiHistory.push(ai)
+}
+
+if(x!=='TIE'){
+    updateInsightResults(x)
+}
+
+render()
+}
+
+function undo(){
+
+  if(!history.length) return
+
+  const last = history.pop()
+
+  if(last!=='TIE'){
+
+    insightStats.forEach(line=>{
+
+      if(line.history.length){
+        line.history.pop()
+      }
+
+    })
+
+  }
+
+  if(last!=='TIE' && aiHistory.length){
+
+    const ai = aiHistory.pop()
+
+    ai===last
+      ? dnaStats.win--
+      : dnaStats.loss--
+
+  }
+
+  render()
+
+}
+
+/* CLEAR */
+function clearAll(){
+
+  history=[]
+  aiHistory=[]
+
+  dnaStats={
+    win:0,
+    loss:0
+  }
+
+  insightStats = Array.from(
+    {length:INSIGHT_COUNT},
+    ()=>({
+      history:[]
+    })
+  )
+
+  clearDeep()
+
+  render()
+}
+/* CLEAR DEEP INSIGHT */
+function clearDeep(){
+  document.getElementById('deepPanel').innerHTML=''
+}
+
+/* ROADS */
+function renderBead(){
+  document.querySelectorAll('#bead td').forEach(td=>td.innerHTML='')
+  history.forEach((r,i)=>{
+    const row=i%ROWS,col=Math.floor(i/ROWS)
+    const cell=bead.rows[row]?.cells[col]
+    if(cell){
+      const cls=r==='PLAYER'?'p':r==='BANKER'?'b':'t'
+      cell.innerHTML=`<div class="dot ${cls}">${r[0]}</div>`
+    }
+  })
+}
+
+function getBigRoad(){
+  let cols=[],col=[],last=null
+  history.forEach(r=>{
+    if(r==='TIE')return
+    if(last&&r!==last){cols.push(col);col=[]}
+    col.push(r);last=r
+  })
+  if(col.length)cols.push(col)
+  return cols
+}
+
+function renderBig(big){
+  document.querySelectorAll('#big td').forEach(td=>td.innerHTML='')
+  big.forEach((c,ci)=>{
+    c.forEach((r,ri)=>{
+      const cell=document.getElementById('big')
+        .rows[Math.min(ri,ROWS-1)]?.cells[ci]
+      if(cell) cell.innerHTML=
+        `<div class="dot ${r==='PLAYER'?'p':'b'}"></div>`
+    })
+  })
+}
+
+/* AI NEXT */
+function calcAiNext(){
+  const last=history.at(-1)
+  if(!last || last==='TIE') return '--'
+  return last==='PLAYER'?'BANKER':'PLAYER'
+}
+
+
+function updateInsightResults(realResult){
+
+  currentInsights.forEach((side,index)=>{
+
+    const correct =
+      side === realResult
+
+    insightStats[index]
+      .history
+      .push(correct ? 'W' : 'L')
+
+  })
+
+}
+const predictors = [
+
+  ()=> history.at(-1)==='PLAYER'
+      ? 'BANKER'
+      : 'PLAYER',
+
+  ()=> history.at(-1),
+
+  ()=>{
+      const h=history.slice(-3)
+
+      const p=h.filter(x=>x==='PLAYER').length
+      const b=h.filter(x=>x==='BANKER').length
+
+      return p>=b
+          ? 'PLAYER'
+          : 'BANKER'
+  },
+
+  ()=>{
+      const h=history.slice(-5)
+
+      const p=h.filter(x=>x==='PLAYER').length
+      const b=h.filter(x=>x==='BANKER').length
+
+      return p>=b
+          ? 'PLAYER'
+          : 'BANKER'
+  },
+
+  ()=> history.length%2
+      ? 'PLAYER'
+      : 'BANKER',
+
+  ()=> history.length%2
+      ? 'BANKER'
+      : 'PLAYER',
+
+  ()=> 'PLAYER',
+
+  ()=> 'BANKER',
+
+  ()=> Math.random()>.5
+      ? 'PLAYER'
+      : 'BANKER',
+
+// Insight 10 : Streak 3
+()=>{
+    const h = history.slice(-3)
+
+    if(h.length < 3) return 'PLAYER'
+
+    return h.every(x=>x===h[0])
+        ? h[0]
+        : 'PLAYER'
+},
+
+// Insight 11 : Anti Streak
+()=>{
+    const h = history.slice(-3)
+
+    if(h.length < 3) return 'BANKER'
+
+    return h.every(x=>x===h[0])
+        ? (
+            h[0]==='PLAYER'
+            ? 'BANKER'
+            : 'PLAYER'
+          )
+        : 'BANKER'
+},
+
+// Insight 12 : Last 7 Majority
+()=>{
+    const h = history.slice(-7)
+
+    const p =
+        h.filter(x=>x==='PLAYER').length
+
+    const b =
+        h.filter(x=>x==='BANKER').length
+
+    return p>b
+        ? 'PLAYER'
+        : 'BANKER'
+},
+
+// Insight 13 : Transition Logic
+()=>{
+    const h = history.slice(-4)
+
+    if(h.length < 4)
+        return 'PLAYER'
+
+    let switchCount = 0
+
+    for(let i=1;i<h.length;i++){
+
+        if(h[i]!==h[i-1])
+            switchCount++
+
+    }
+
+    return switchCount>=2
+        ? history.at(-1)
+        : (
+            history.at(-1)==='PLAYER'
+            ? 'BANKER'
+            : 'PLAYER'
+          )
+}
+
+]
+
+/* DEEP INSIGHT */
+function deepInsight(){
+
+    const unique =
+    new Set(
+        predictors.map(fn=>fn())
+    )
+
+    console.log(
+        'Unique Insights:',
+        unique.size,
+        '/',
+        predictors.length
+    )
+
+    return predictors.map((fn,index)=>{
+    const side = fn()
+
+    const hist =
+      insightStats[index].history
+
+    const wins =
+      hist.filter(v => v === 'W').length
+
+    const losses =
+      hist.filter(v => v === 'L').length
+
+    const total =
+      wins + losses
+
+   const p =
+  total > 0
+    ? Number(
+        ((wins / total) * 100)
+        .toFixed(0)
+      )
+    : 0
+
+    console.log(
+      `Insight ${index+1}`,
+      'W=',wins,
+      'L=',losses,
+      'Total=',total,
+      'Rate=',p+'%'
+    )
+
+ return {
+  n:`Insight ${index+1}`,
+  s:side,
+  p
+}
+
+  })
+
+}
+function renderDeep(){
+
+  const box=document.getElementById('deepPanel')
+  box.innerHTML=''
+
+  const d=deepInsight()
+
+ const max = Math.max(
+  ...d.map(x => Number(x.p))
+)
+d.forEach((x,index)=>{
+
+  const color =
+    x.s==='PLAYER'
+      ? 'text-blue-400'
+      : 'text-red-400'
+
+  const history =
+    insightStats[index].history
+
+  let wlHtml=''
+
+  console.log(
+    x.n,
+    history.length
+  )
+
+for(let r=0; r<Math.ceil(history.length/15); r++){
+
+  wlHtml += `
+  <div style="
+    display:grid;
+    grid-template-columns:repeat(15,minmax(14px,14px));
+    gap:2px;
+    margin-top:4px;
+  ">
+  `
+
+  for(let c=0; c<15; c++){
+
+    const pos = r * 15 + c
+    const v = history[pos]
+
+    const bg =
+      v === 'W'
+        ? '#16a34a'
+        : v === 'L'
+        ? '#dc2626'
+        : 'transparent'
+
+    wlHtml += `
+    <div style="
+      width:14px;
+      height:14px;
+      font-size:8px;
+      border-radius:3px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:${bg};
+      color:white;
+      font-weight:bold;
+    ">
+      ${v || ''}
+    </div>
+    `
+  }
+
+  wlHtml += `
+  </div>
+  `
+}
+
+box.innerHTML += `
+<div class="p-2 rounded-xl border ${
+  Number(x.p)===max
+    ? 'border-yellow-400 radar'
+    : 'border-slate-600'
+}">
+
+
+  ${x.n}<br>
+
+  <span class="${color}">
+    ${x.s}
+  </span><br>
+
+  ${x.p}%
+
+<div class="mt-2">
+  ${wlHtml}
+</div>
+
+</div>
+`
+})
+}
+function togglePassword(){
+
+const p =
+document.getElementById('passInput')
+
+p.type =
+p.type === 'password'
+? 'text'
+: 'password'
+
+}
+
+function login(){
+
+const user =
+document
+.getElementById('userInput')
+.value
+
+const pass =
+document
+.getElementById('passInput')
+.value
+
+if(
+user === '1234'
+&&
+pass === '1234'
+){
+
+document
+.getElementById('loginScreen')
+.style.display='none'
+
+render()
+
+}else{
+
+document
+.getElementById('loginMsg')
+.innerText =
+'Username หรือ Password ไม่ถูกต้อง'
+
+}
+
+}
+/* RENDER */
+function render(){
+
+  renderBead()
+  renderBig(getBigRoad())
+
+  const ai=calcAiNext()
+
+  document.getElementById('aiResult').innerText=ai
+
+  const total=dnaStats.win+dnaStats.loss
+  const rate=total?Math.round(dnaStats.win/total*100):0
+
+  document.getElementById('dnaStat').innerText=
+    `${rate}% (${dnaStats.win}W / ${dnaStats.loss}L)`
+
+  if(history.length>0)
+    renderDeep()
+}
+
+// วางตรงนี้
+document.getElementById('loginScreen').style.display='flex'
+
+</script>
+</body>
+</html>
