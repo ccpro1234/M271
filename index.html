@@ -83,49 +83,44 @@ font-weight:bold;
 
 <div class="login-box">
 
-<h2 style="text-align:center;font-size:22px;font-weight:bold">
-LOGIN
-</h2>
+    <input
+        id="userInput"
+        class="login-input"
+        placeholder="Username"
+    >
 
-<input
-id="userInput"
-class="login-input"
-placeholder="Username"
->
+    <input
+        id="passInput"
+        type="password"
+        class="login-input"
+        placeholder="Password"
+    >
 
-<input
-id="passInput"
-type="password"
-class="login-input"
-placeholder="Password"
+   <button
+    class="login-btn"
+    onclick="login()"
 >
-
-<label style="font-size:13px">
-<input
-type="checkbox"
-onclick="togglePassword()"
->
-แสดงรหัสผ่าน
-</label>
-
-<button
-class="login-btn"
-onclick="login()"
->
-เข้าสู่ระบบ
+    เข้าสู่ระบบ
 </button>
 
-<div id="loginMsg"
-style="
-margin-top:10px;
-text-align:center;
-color:#f87171;
-">
-</div>
+</div> <!-- login-box -->
+
+
+
+<div class="grid lg:grid-cols-4 md:grid-cols-3 grid-cols-2 gap-2 text-xs text-center font-bold items-start">
+
+    <div id="loginMsg"
+    style="
+    margin-top:10px;
+    text-align:center;
+    color:#f87171;
+    ">
+    </div>
 
 </div>
 
 </div>
+
 <div class="max-w-5xl mx-auto">
 
 <h1 class="text-xl font-bold text-blue-400 mb-3">Ai Smart</h1>
@@ -172,8 +167,31 @@ class="grid lg:grid-cols-4 md:grid-cols-3 grid-cols-2 gap-2 text-xs text-center 
 
 <!-- ROADS -->
 <div class="panel">
+
   <div class="text-xs mb-1">BEAD</div>
+
+ <div class="flex justify-center gap-4 text-xs font-bold mb-2">
+
+    <span class="text-blue-400">
+        P: <span id="pCount">0</span>
+    </span>
+
+    <span class="text-red-400">
+        B: <span id="bCount">0</span>
+    </span>
+
+    <span class="text-green-400">
+        T: <span id="tCount">0</span>
+    </span>
+
+    <span class="text-white">
+        Total: <span id="totalCount">0</span>
+    </span>
+
+</div>
+
   <table id="bead"></table>
+
 </div>
 
 <div class="panel">
@@ -226,32 +244,41 @@ make('big',ROWS,60)
 function add(x){
 
   if(aiHistory.length && x!=='TIE'){
-    const lastAi=aiHistory.at(-1)
+    const lastAi = aiHistory.at(-1)
     lastAi===x ? dnaStats.win++ : dnaStats.loss++
   }
 
   // ===== วางตรงนี้ =====
-const prevPredictions = predictors.map(fn => fn())
+  const prevPredictions = predictors.map(fn => fn())
 
-history.push(x)
+  history.push(x)
 
-currentInsights = prevPredictions
+  // ===== P/B/T/TOTAL =====
+ const p = history.filter(v => v === 'PLAYER').length
+const b = history.filter(v => v === 'BANKER').length
+const t = history.filter(v => v === 'TIE').length
 
-const ai = calcAiNext()
+  document.getElementById('pCount').textContent = p
+  document.getElementById('bCount').textContent = b
+  document.getElementById('tCount').textContent = t
+  document.getElementById('totalCount').textContent = p + b + t
 
-if(ai!=='--'){
-    aiHistory.push(ai)
-}
+  currentInsights = prevPredictions
 
-if(x!=='TIE'){
-    updateInsightResults(x)
-}
+  const ai = calcAiNext()
 
-render()
+  if(ai!=='--'){
+      aiHistory.push(ai)
+  }
+
+  if(x!=='TIE'){
+      updateInsightResults(x)
+  }
+
+  render()
 }
 
 function undo(){
-
   if(!history.length) return
 
   const last = history.pop()
@@ -684,12 +711,22 @@ function render(){
 
   renderBead()
   renderBig(getBigRoad())
+const ai = calcAiNext()
 
-  const ai=calcAiNext()
+const aiEl = document.getElementById('aiResult')
+aiEl.innerText = ai
 
-  document.getElementById('aiResult').innerText=ai
+if(ai === 'BANKER'){
+    aiEl.style.color = '#dc2626'   // แดง
+}
+else if(ai === 'PLAYER'){
+    aiEl.style.color = '#2563eb'   // น้ำเงิน
+}
+else{
+    aiEl.style.color = '#94a3b8'   // --
+}
 
-  const total=dnaStats.win+dnaStats.loss
+const total = dnaStats.win + dnaStats.loss
   const rate=total?Math.round(dnaStats.win/total*100):0
 
   document.getElementById('dnaStat').innerText=
